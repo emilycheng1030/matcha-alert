@@ -1,8 +1,16 @@
 import requests
 from bs4 import BeautifulSoup
+import json
+import os
 
-URL = "https://www.marukyu-koyamaen.co.jp/english/shop/products/1191040c1"
 WEBHOOK = "https://discord.com/api/webhooks/1510995633694314636/x9RogpMnLhz4pOvp_on3_sxn73SW8iC8cKjeeqxiUarZZ6RL9uq5qNkclnKFQyYLCwyy"
+
+PRODUCTS = {
+    "40g": "https://www.marukyu-koyamaen.co.jp/english/shop/products/1191040c1",
+    "100g": "https://www.marukyu-koyamaen.co.jp/english/shop/products/1111020c1"
+}
+
+STATE_FILE = "state.json"
 
 def send(msg):
     try:
@@ -10,33 +18,40 @@ def send(msg):
     except Exception as e:
         print("Discord error:", e)
 
-def check_stock(soup, text):
-    text = text.lower()
+def load_state():
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE, "r") as f:
+            return json.load(f)
+    return {}
 
-    # ① 基本關鍵字判斷
-    keyword_available = (
-        "add to cart" in text or
-        "in stock" in text
-    )
+def save_state(state):
+    with open(STATE_FILE, "w") as f:
+        json.dump(state, f)
 
-    # ② 更重要：是否有購物表單（通常有貨才會出現）
-    has_cart_form = soup.select_one("form") is not None
-
-    # ③ 是否明確寫 sold out
-    sold_out = "sold out" in text or "out of stock" in text
-
-    # 判斷邏輯（核心）
-    return (keyword_available or has_cart_form) and not sold_out
-
-try:
-    r = requests.get(URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
+def check_stock(url):
+    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
     soup = BeautifulSoup(r.text, "html.parser")
-    text = soup.get_text(" ", strip=True)
+    text = soup.get_text(" ", strip=True).lower()
 
-    if check_stock(soup, text):
-        send("🍵 小山園補貨通知！\nIsuzu 40g 可能可購買\n" + URL)
-    else:
-        print("目前無貨")
+    keyword = ("add to cart" in text or "in stock" in text)
+    sold_out = ("sold out" in text or "out of stock" in text)
+    has_form = soup.select_one("form") is not None
 
-except Exception as e:
-    print("error:", e)
+    return (keyword or has_form) and not sold_out
+
+# 讀取上次狀態
+state = load_state()
+
+for name, url in PRODUCTS.items():
+    current = check_stock(url)
+    last = state.get(name, False)
+
+    # 只在「無貨 → 有貨」通知
+    if current and not last:
+        send(f"🍵 小山園補貨通知！\n{name} 可購買\n{url}")
+
+    state[name] = current
+
+save_state(state)
+
+print(state)
