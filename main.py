@@ -6,8 +6,10 @@ import os
 WEBHOOK = "https://discord.com/api/webhooks/1510995633694314636/x9RogpMnLhz4pOvp_on3_sxn73SW8iC8cKjeeqxiUarZZ6RL9uq5qNkclnKFQyYLCwyy"
 
 PRODUCTS = {
-    "40g": "https://www.marukyu-koyamaen.co.jp/english/shop/products/1191040c1",
-    "100g": "https://www.marukyu-koyamaen.co.jp/english/shop/products/1111020c1"
+    "Aoarashi": "https://www.marukyu-koyamaen.co.jp/english/shop/products/1141020c1",
+    "Wako": "https://www.marukyu-koyamaen.co.jp/english/shop/products/1161020c1",
+    "Isuzu": "https://www.marukyu-koyamaen.co.jp/english/shop/products/1191040c1",
+    "Unkaku": "https://www.marukyu-koyamaen.co.jp/english/shop/products/11a1040c1"
 }
 
 STATE_FILE = "state.json"
